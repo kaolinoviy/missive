@@ -10,20 +10,28 @@ import missive.common.protocol.PacketType;
 
 public class LoginController implements MessageListener {
 
-    @FXML private TextField serverField;
+    // default public server. override with env var MISSIVE_SERVER=host:port for dev/self-hosted.
+    private static final String DEFAULT_SERVER = "45.150.32.198:9090";
+
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
     @FXML private Button loginBtn;
     @FXML private Button registerBtn;
     @FXML private Label statusLabel;
+    @FXML private Label serverLabel;
 
     private ChatClient client;
 
     @FXML
     public void initialize() {
-        serverField.setText("localhost:9090");
         statusLabel.setText("");
         loginBtn.setDefaultButton(true);
+        if (serverLabel != null) serverLabel.setText("server: " + resolveServer());
+    }
+
+    private static String resolveServer() {
+        String env = System.getenv("MISSIVE_SERVER");
+        return (env != null && !env.isBlank()) ? env.trim() : DEFAULT_SERVER;
     }
 
     @FXML
@@ -37,7 +45,7 @@ public class LoginController implements MessageListener {
     }
 
     private void doConnect(boolean register) {
-        String serverAddr = serverField.getText().trim();
+        String serverAddr = resolveServer();
         String user = usernameField.getText().trim();
         String pass = passwordField.getText();
 

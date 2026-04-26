@@ -21,11 +21,6 @@
         <VBox spacing="14" styleClass="login-card">
 
             <VBox spacing="5">
-                <Label text="SERVER" styleClass="field-label"/>
-                <TextField fx:id="serverField" promptText="host:port" styleClass="input-field"/>
-            </VBox>
-
-            <VBox spacing="5">
                 <Label text="USERNAME" styleClass="field-label"/>
                 <TextField fx:id="usernameField" promptText="your handle" styleClass="input-field"/>
             </VBox>
@@ -45,7 +40,9 @@
             <Label fx:id="statusLabel" text="" styleClass="status-label" wrapText="true"/>
         </VBox>
 
-        <Label text="missive · v1.0" styleClass="version-label"
-               style="-fx-padding: 16 0 0 0;"/>
+        <VBox alignment="CENTER" spacing="2" style="-fx-padding: 16 0 0 0;">
+            <Label fx:id="serverLabel" text="server: ..." styleClass="version-label"/>
+            <Label text="missive · v1.0" styleClass="version-label"/>
+        </VBox>
     </VBox>
 </StackPane>
