@@ -1,6 +1,7 @@
 target/
 dist/
 *.zip
+demo-notes.md
 .idea/
 .vscode/
 .classpath
