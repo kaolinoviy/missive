@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="missive.client.ui.ChatController"
+            styleClass="chat-root">
+
+    <!-- top bar -->
+    <top>
+        <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="10">
+            <Label text="missive_" styleClass="logo-text-sm"/>
+            <Label text="/" styleClass="top-divider"/>
+
+            <VBox spacing="0" alignment="CENTER_LEFT">
+                <Label fx:id="roomHeaderLabel" text="# general" styleClass="room-header-label"/>
+                <Label fx:id="roomSubLabel" text="channel" styleClass="room-sub-label"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Label fx:id="usernameLabel" styleClass="username-label"/>
+            <Button text="export" onAction="#handleExportHistory" styleClass="btn-ghost"/>
+            <Button text="logout" onAction="#handleLogout" styleClass="btn-ghost"/>
+        </HBox>
+    </top>
+
+    <!-- sidebar -->
+    <left>
+        <VBox fx:id="sidebar" styleClass="sidebar" minWidth="240" maxWidth="240">
+
+            <Label text="CHANNELS" styleClass="section-header"/>
+            <ListView fx:id="roomList" styleClass="room-list" prefHeight="400" VBox.vgrow="SOMETIMES"/>
+
+            <VBox style="-fx-padding: 6 10;">
+                <Button text="+  new channel" maxWidth="Infinity"
+                        onAction="#handleNewRoom" styleClass="btn-new-room"/>
+            </VBox>
+
+            <Region styleClass="sidebar-sep"/>
+
+            <Label text="MEMBERS" styleClass="section-header"/>
+            <ListView fx:id="userList" styleClass="user-list" prefHeight="200"/>
+
+        </VBox>
+    </left>
+
+    <!-- message area -->
+    <center>
+        <VBox styleClass="message-area">
+
+            <!-- search bar -->
+            <HBox styleClass="search-bar" spacing="8" alignment="CENTER_LEFT">
+                <TextField fx:id="searchField" promptText="search messages in this room…"
+                           styleClass="search-input" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="clearSearchBtn" text="clear ✕" onAction="#clearSearch"
+                        styleClass="btn-clear-search"/>
+            </HBox>
+
+            <ListView fx:id="messageList" styleClass="message-list" VBox.vgrow="ALWAYS"/>
+
+            <Label fx:id="typingLabel" text="" styleClass="typing-label"/>
+
+            <HBox styleClass="input-bar">
+                <HBox styleClass="input-bar-inner" alignment="CENTER" HBox.hgrow="ALWAYS">
+                    <TextField fx:id="messageInput" promptText="write a message…"
+                               styleClass="message-input" HBox.hgrow="ALWAYS"/>
+                    <Button fx:id="sendBtn" text="send" onAction="#handleSend"
+                            styleClass="btn-send"/>
+                </HBox>
+            </HBox>
+        </VBox>
+    </center>
+
+</BorderPane>
