@@ -32,7 +32,7 @@ copy /y target\missive-1.0.0.jar target\applib\ >nul
 echo.
 echo === [3/5] resolving javafx module path ===
 set MP=
-for %%M in (base graphics controls fxml) do (
+for %%M in (base graphics controls fxml media) do (
     set "MP=!MP!;%JFX_BASE%\javafx-%%M\%JFX_VER%\javafx-%%M-%JFX_VER%.jar"
     set "MP=!MP!;%JFX_BASE%\javafx-%%M\%JFX_VER%\javafx-%%M-%JFX_VER%-win.jar"
 )
@@ -44,7 +44,7 @@ echo === [4/5] building custom runtime via jlink ===
 rmdir /s /q target\runtime 2>nul
 "%JDK%\bin\jlink.exe" ^
   --module-path "%MP%" ^
-  --add-modules java.base,java.sql,java.naming,java.desktop,java.logging,jdk.unsupported,javafx.controls,javafx.fxml ^
+  --add-modules java.base,java.sql,java.naming,java.desktop,java.logging,java.scripting,jdk.unsupported,javafx.controls,javafx.fxml,javafx.media ^
   --strip-debug --no-header-files --no-man-pages --compress=zip-6 ^
   --output target\runtime
 if errorlevel 1 ( echo jlink failed & exit /b 1 )

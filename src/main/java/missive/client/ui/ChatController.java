@@ -8,6 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.VBox;
+import javafx.scene.media.AudioClip;
 import missive.client.ChatClient;
 import missive.client.MessageListener;
 import missive.common.model.*;
@@ -39,6 +40,13 @@ public class ChatController implements MessageListener {
     private final ObservableList<Message> messages = FXCollections.observableArrayList();
     private final ObservableList<Packet.UserRecord> onlineUsers = FXCollections.observableArrayList();
     private final Map<Integer, ObservableList<Message>> roomMessages = new HashMap<>();
+
+    // dedup incoming messages — server is broadcast-based and may rarely double-send
+    private final Set<Integer> seenMessageIds = new HashSet<>();
+    // sliding-window of recent notification timestamps (ms) — throttles notify sound
+    private final LinkedList<Long> recentNotifyTimes = new LinkedList<>();
+    // notification sound clip (loaded lazily once)
+    private AudioClip notifySound;
 
     private Room currentRoom;
     private List<Packet.UserRecord> currentMembers = new ArrayList<>();
@@ -80,6 +88,27 @@ public class ChatController implements MessageListener {
 
         if (clearSearchBtn != null) clearSearchBtn.setVisible(false);
         typingLabel.setText("");
+        loadNotifySound();
+    }
+
+    private void loadNotifySound() {
+        try {
+            var url = getClass().getResource("/sounds/notify.wav");
+            if (url != null) notifySound = new AudioClip(url.toExternalForm());
+        } catch (Exception ignored) {}
+    }
+
+    // ring at most 3 times per 5-second window
+    private void maybePlayNotify() {
+        if (notifySound == null) return;
+        long now = System.currentTimeMillis();
+        // drop entries older than 5s from the head — LinkedList shines as a deque here
+        while (!recentNotifyTimes.isEmpty() && now - recentNotifyTimes.peekFirst() > 5000) {
+            recentNotifyTimes.pollFirst();
+        }
+        if (recentNotifyTimes.size() >= 3) return;
+        recentNotifyTimes.addLast(now);
+        notifySound.play(0.45);
     }
 
     public void init(ChatClient client) {
@@ -170,8 +199,27 @@ public class ChatController implements MessageListener {
             String filename = currentRoom.getName().replaceAll("[^a-zA-Z0-9_-]", "_") + "_"
                     + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm")) + ".txt";
             Path file = exportDir.resolve(filename);
+
+            // tally messages per sender — TreeMap keeps senders alphabetically sorted
+            TreeMap<String, Integer> stats = new TreeMap<>();
+            for (Message m : messages) {
+                if (m instanceof ChatMessage cm) {
+                    stats.merge(cm.getSenderName(), 1, Integer::sum);
+                }
+            }
+
             try (BufferedWriter w = Files.newBufferedWriter(file)) {
                 w.write("# " + currentRoom.getName() + " — exported " + LocalDateTime.now());
+                w.newLine();
+                w.write("# total messages: " + messages.size());
+                w.newLine();
+                w.write("# breakdown by sender:");
+                w.newLine();
+                for (var e : stats.entrySet()) {
+                    w.write("#   " + e.getKey() + ": " + e.getValue());
+                    w.newLine();
+                }
+                w.write("# ---");
                 w.newLine();
                 for (Message m : messages) {
                     w.write(m.getFormattedDisplay());
@@ -257,6 +305,9 @@ public class ChatController implements MessageListener {
     }
 
     private void handleIncomingMessage(Packet p) {
+        // skip duplicates (defensive — HashSet O(1) lookup)
+        if (p.getMessageId() > 0 && !seenMessageIds.add(p.getMessageId())) return;
+
         ChatMessage msg = new ChatMessage(
                 p.getMessageId(), p.getRoomId(),
                 p.getUserId(), p.getSenderName(),
@@ -270,16 +321,22 @@ public class ChatController implements MessageListener {
                 p.getRoomId(), k -> FXCollections.observableArrayList());
         roomMsgs.add(msg);
 
-        if (currentRoom != null && currentRoom.getId() == p.getRoomId() && !inSearchMode) {
+        boolean fromMe = client != null && p.getUserId() == client.getUserId();
+        boolean activeRoom = currentRoom != null && currentRoom.getId() == p.getRoomId();
+
+        if (activeRoom && !inSearchMode) {
             messageList.setItems(roomMsgs);
             scrollToBottom();
-        } else if (currentRoom == null || currentRoom.getId() != p.getRoomId()) {
+        }
+        if (!activeRoom) {
             rooms.stream().filter(r -> r.getId() == p.getRoomId())
                     .findFirst().ifPresent(r -> {
                         r.incrementUnread();
                         roomList.refresh();
                     });
         }
+        // play sound on incoming message that's not mine and not in active foreground room
+        if (!fromMe && !activeRoom) maybePlayNotify();
     }
 
     private void handleHistory(Packet p) {

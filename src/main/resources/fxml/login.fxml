@@ -2,6 +2,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
+<?import javafx.scene.image.*?>
 
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
@@ -10,7 +11,10 @@
 
     <VBox alignment="CENTER" spacing="0" maxWidth="380">
 
-        <VBox alignment="CENTER" spacing="2" styleClass="login-logo-block">
+        <VBox alignment="CENTER" spacing="8" styleClass="login-logo-block">
+            <ImageView fitWidth="72" fitHeight="72" preserveRatio="true" smooth="true">
+                <Image url="@/images/logo.png"/>
+            </ImageView>
             <HBox alignment="CENTER" spacing="2">
                 <Label text="missive" styleClass="logo-text"/>
                 <Label text="_" styleClass="logo-accent"/>
